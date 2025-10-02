@@ -111,7 +111,9 @@ stage('Docker Build & Trivy Scan') {
         sh '''
           pwd
           who
-          docker build -t ${DOCKER_IMAGE_NAME} -f Dockerfile .
+          export PATH=$PATH:/usr/local/lib/docker/cli-plugins
+          docker buildx create --use
+          docker buildx build -t ${DOCKER_IMAGE_NAME} -f Dockerfile .
         '''
 
         echo "Scanning image with Trivy..."
