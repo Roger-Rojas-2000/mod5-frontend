@@ -20,7 +20,7 @@ pipeline {
       }
     }
     
-    /*stage('SAST - Semgrep') {
+    stage('SAST - Semgrep') {
       steps {
         echo "Running Semgrep (SAST)..."
         sh '''
@@ -103,7 +103,7 @@ stage('PaC - Checkov Validation') {
       fi
     '''
   }
-} */
+} 
 
 stage('Docker Build & Trivy Scan') {
       steps {

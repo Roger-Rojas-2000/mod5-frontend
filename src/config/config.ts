@@ -1,4 +1,4 @@
-const URL_API_GATEWAY = "http://13.222.59.250:3000";
+const URL_API_GATEWAY = "http://34.234.88.143";
 
 // Microservicio de clientes (usa /api/customers/)
 const URL_API_SERVICE1 = `${URL_API_GATEWAY}`;
