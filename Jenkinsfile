@@ -109,6 +109,8 @@ stage('Docker Build & Trivy Scan') {
       steps {
         echo "Building Docker image..."
         sh '''
+          pwd
+          who
           docker build -t ${DOCKER_IMAGE_NAME} -f Dockerfile .
         '''
 
