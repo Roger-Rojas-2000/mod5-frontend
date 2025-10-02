@@ -1,0 +1,84 @@
+pipeline {
+  agent { label 'docker-node' }
+
+  environment {
+    SONAR_USER_HOME = "${WORKSPACE}/.sonar"
+    GIT_DEPTH = "0"
+  }
+
+  stages {
+    stage('Lint') {
+      agent {
+        docker { image 'node:20' }
+      }
+      steps {
+        sh 'npm ci'
+        sh 'npm run lint > lint-report.txt'
+      }
+      post {
+        always {
+          archiveArtifacts artifacts: 'lint-report.txt', onlyIfSuccessful: false
+        }
+      }
+    }
+
+    stage('Test') {
+      agent {
+        docker { image 'node:20' }
+      }
+      steps {
+        sh 'npm install'
+        sh 'npm run test'
+      }
+    }
+
+    stage('Build') {
+      agent {
+        docker { image 'node:20' }
+      }
+      steps {
+        sh 'npm ci'
+        sh 'npm run build'
+      }
+      post {
+        success {
+          archiveArtifacts artifacts: 'dist/**', fingerprint: true
+        }
+      }
+    }
+
+    /*stage('SonarQube Analysis') {
+      agent {
+        docker { 
+          image 'sonarsource/sonar-scanner-cli:latest'
+          args '-u root:root' // permisos si necesitas escribir en cache
+        }
+      }
+      steps {
+        withCredentials([string(credentialsId: 'sonar-token', variable: 'SONAR_TOKEN')]) {
+          sh """
+            sonar-scanner \
+              -Dsonar.login=$SONAR_TOKEN \
+              -Dsonar.host.url=$SONAR_HOST_URL
+          """
+        }
+      }
+    } */
+
+    stage('Deploy') {
+      agent {
+        docker { image 'ubuntu:latest' }
+      }
+      steps {
+        withCredentials([sshUserPrivateKey(credentialsId: 'server-frontend', keyFileVariable: 'KEYFILE', usernameVariable: 'SSH_USER')]) {
+          sh '''
+            apt-get update && apt-get install -y openssh-client
+            ssh -o StrictHostKeyChecking=no -i $KEYFILE ubuntu@172.24.238.159 bash -s < deploy.sh
+            scp -r -o StrictHostKeyChecking=no -i $KEYFILE dist/* ubuntu@172.24.238.159:/var/www/frontend
+            ssh -o StrictHostKeyChecking=no -i $KEYFILE ubuntu@172.24.238.159 "sudo systemctl reload nginx"
+          '''
+        }
+      }
+    }
+  }
+}

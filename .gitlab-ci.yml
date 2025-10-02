@@ -1,0 +1,84 @@
+stages:
+  - lint
+  - test
+  - build
+  - sonar
+  - deploy
+
+variables:
+  SONAR_USER_HOME: "${CI_PROJECT_DIR}/.sonar"
+  GIT_DEPTH: "0" 
+
+#cache:
+#  paths:
+#    - node_modules/
+
+lint:
+  image: node:20
+  stage: lint
+  script:
+    - npm ci
+    - npm run lint > lint-report.txt
+  artifacts:
+    when: always
+    paths:
+      - lint-report.txt
+  only:
+    - merge_requests
+    - main
+
+test:
+  image: node:20
+  stage: test
+  script:
+    - npm install
+    - npm run test
+  only:
+    - merge_requests
+    - main
+
+build:
+  image: node:20
+  stage: build
+  script:
+    - npm ci
+    - npm run build
+  artifacts:
+    paths:
+      - dist
+    expire_in: 1 hour
+  only:
+    - main
+
+sonar:
+  image:
+    name: sonarsource/sonar-scanner-cli:latest
+    entrypoint: [""]
+  cache:
+    key: "${CI_JOB_NAME}"
+    paths:
+      - .sonar/cache
+  stage: sonar
+  script:
+    - sonar-scanner -Dsonar.login=$SONAR_TOKEN -Dsonar.host.url=$SONAR_HOST_URL
+  only:
+    - main
+  dependencies:
+    - build
+
+deploy:
+  stage: deploy
+  image: ubuntu:latest
+  before_script:
+    - apt-get update && apt-get install -y openssh-client 
+    - echo "${SSH_PRIVATE_KEY}" > secret_key.pem
+    - chmod 400 secret_key.pem
+  script:
+    - ssh -o StrictHostKeyChecking=no -i secret_key.pem ubuntu@18.118.155.105 bash -s < deploy.sh
+    - scp -r -o StrictHostKeyChecking=no -i secret_key.pem dist/* ubuntu@18.118.155.105:/var/www/frontend
+    - ssh -o StrictHostKeyChecking=no -i secret_key.pem ubuntu@18.118.155.105 "sudo systemctl reload nginx"
+    
+  only:
+    - main
+  dependencies:
+    - build
