@@ -6,9 +6,3 @@ services:
     container_name: frontend-mod5
     ports:
       - "3000:80"
-    networks:
-      - bridge
-
-networks:
-  bridge:
-    external: true
