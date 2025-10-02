@@ -38,7 +38,7 @@ pipeline {
         docker run --rm \
             -v $PWD:/app \
             -w /app \
-            node:18 \
+            node:20 \
             bash -c "npm install --no-audit --no-fund && \
                     if [ -f package.json ]; then \
                         if npm test --silent; then echo 'Tests OK'; else echo 'Tests failed (continue)'; fi; \
@@ -56,7 +56,7 @@ pipeline {
                 -v $PWD:/src \
                 -v $PWD/dependency-check-data:/usr/share/dependency-check/data \
                 -v $PWD/dependency-check-reports:/report \
-                owasp/dependency-check:latest \
+                owasp/dependency-check:12.1.6 \
                 dependency-check.sh \
                 --project devsecops-labs \
                 --scan . \
