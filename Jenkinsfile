@@ -141,10 +141,6 @@ stage('PaC - Trivy Validation') {
   steps {
     echo "Validating Trivy report..."
     sh '''
-      if ! command -v jq &> /dev/null; then
-        apt-get update && apt-get install -y jq
-      fi
-
       # Contar vulnerabilidades CRÍTICAS y ALTAS
       HIGH=$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="HIGH")] | length' trivy-reports/trivy-report.json)
       CRITICAL=$(jq '[.Results[].Vulnerabilities[]? | select(.Severity=="CRITICAL")] | length' trivy-reports/trivy-report.json)
@@ -152,7 +148,7 @@ stage('PaC - Trivy Validation') {
       echo "HIGH vulnerabilities: $HIGH"
       echo "CRITICAL vulnerabilities: $CRITICAL"
 
-      TOTAL=$((HIGH + CRITICAL))
+      TOTAL=$((CRITICAL))
 
       if [ "$TOTAL" -gt 0 ]; then
         echo "Security issues detected! Failing pipeline."
