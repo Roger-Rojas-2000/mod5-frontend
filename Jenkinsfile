@@ -115,7 +115,6 @@ stage('Docker Build & Trivy Scan') {
         echo "Scanning image with Trivy..."
         sh '''
           mkdir -p trivy-reports trivy-cache
-          
 
           # Report JSON
           docker run --rm \
